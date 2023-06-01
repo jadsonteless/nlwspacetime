@@ -1,12 +1,40 @@
 import { StatusBar } from 'expo-status-bar'
-import { Text, View } from 'react-native'
+import { ImageBackground } from 'react-native'
 
-// Corpo da page
+import {
+  useFonts,
+  Roboto_400Regular,
+  Roboto_700Bold,
+} from '@expo-google-fonts/roboto'
+import { BaiJamjuree_700Bold } from '@expo-google-fonts/bai-jamjuree'
+
+import blubg from './src/assets/bg-blur.png'
+import Stripes from './src/assets/stripes.svg'
+
+import { styled } from 'nativewind'
+
+const StyledeStripes = styled(Stripes)
+
 export default function App() {
+  const [hasLoadedFonts] = useFonts({
+    Roboto_400Regular,
+    Roboto_700Bold,
+    BaiJamjuree_700Bold,
+  })
+
+  // hasLoadedFonts = tras a informação se todas as fonts foram carregadas
+  if (!hasLoadedFonts) {
+    return null
+  }
+
   return (
-    <View className="flex-1 items-center justify-center bg-gray-950">
-      <Text className="text-5xl font-bold text-zinc-50">Rocketseat</Text>
-      <StatusBar style="light" />
-    </View>
+    <ImageBackground
+      source={blubg}
+      className="relative flex-1 items-center bg-gray-950"
+      imageStyle={{ position: 'absolute', left: '-100%' }}
+    >
+      <StyledeStripes className="absolute left-2" />
+      <StatusBar style="light" translucent />
+    </ImageBackground>
   )
 }

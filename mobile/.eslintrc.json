@@ -1,3 +1,7 @@
 {
-  "extemds": ["@rocketseat/eslint-config/react"]
+  "extends": ["@rocketseat/eslint-config/react"],
+  "rules": {
+    "camelcase": "off",
+    "semi": "off"
+  }
 }
