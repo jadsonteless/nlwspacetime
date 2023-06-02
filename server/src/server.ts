@@ -1,16 +1,11 @@
 import fastify from 'fastify'
-import { PrismaClient } from '@prisma/client'
+import { rotaMemorias } from './rotas/memories'
 
-const app = fastify()
-const prisma = new PrismaClient()
+const funcaoFastify = fastify()
 
-app.get('/users', async () => {
-  const users = await prisma.user.findMany()
+funcaoFastify.register(rotaMemorias)
 
-  return users
-})
-
-app
+funcaoFastify
   .listen({
     port: 3333,
   })
