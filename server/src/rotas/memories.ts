@@ -1,10 +1,18 @@
 import { FastifyInstance } from 'fastify'
 import { prismaFuncao } from '../lib/prisma'
-import { z } from 'zod' // trata.valida informação recebida
+import { z } from 'zod'
 
 export async function rotaMemorias(funcaoFastify: FastifyInstance) {
-  funcaoFastify.get('/memories', async () => {
+  funcaoFastify.addHook('preHandler', async (request) => {
+    await request.jwtVerify()
+  }) 
+  
+  funcaoFastify.get('/memories', async (request) => {
+ 
     const conteudoMemories = await prismaFuncao.memory.findMany({
+      where: {
+        userId: request.user.sub
+      },
       orderBy: {
         createdAt: 'asc',
       },
@@ -19,7 +27,7 @@ export async function rotaMemorias(funcaoFastify: FastifyInstance) {
     })
   })
 
-  funcaoFastify.get('/memories/:id', async (request) => {
+  funcaoFastify.get('/memories/:id', async (request, reply) => {
     const paramsSchema = z.object({
       id: z.string().uuid(),
     })
@@ -30,6 +38,10 @@ export async function rotaMemorias(funcaoFastify: FastifyInstance) {
         id,
       },
     })
+
+    if (!memoryDoSql.isPubluc && memoryDoSql.userId != request.user.sub) {
+      return reply.status(401).send()
+    }
 
     return memoryDoSql
   })
@@ -48,14 +60,14 @@ export async function rotaMemorias(funcaoFastify: FastifyInstance) {
         content,
         coverUrl,
         isPubluc,
-        userId: '45e5a820-68f3-42f8-8015-49e67122e7a1',
+        userId: request.user.sub, 
       },
     })
 
     return memoryDoSql
   })
 
-  funcaoFastify.put('/memories/:id', async (request) => {
+  funcaoFastify.put('/memories/:id', async (request, reply) => {
     const paramsSchema = z.object({
       id: z.string().uuid(),
     })
@@ -68,9 +80,18 @@ export async function rotaMemorias(funcaoFastify: FastifyInstance) {
       isPubluc: z.coerce.boolean().default(false),
     })
 
-    const { content, coverUrl, isPubluc } = bodySchema.parse(request.body)
+    const { content, coverUrl, isPubluc } = bodySchema.parse(request.body) 
 
-    const memoryDoSql = prismaFuncao.memory.update({
+    let memoryDoSql = await prismaFuncao.memory.findFirstOrThrow({
+      where: {
+        id,
+      }
+    })
+
+    if (memoryDoSql.userId !== request.user.sub) {
+      return reply.status(401).send()
+    }
+    memoryDoSql = await prismaFuncao.memory.update({
       where: {
         id,
       },
@@ -84,12 +105,22 @@ export async function rotaMemorias(funcaoFastify: FastifyInstance) {
     return memoryDoSql
   })
 
-  funcaoFastify.delete('/memories/:id', async (request) => {
+  funcaoFastify.delete('/memories/:id', async (request, reply) => {
     const paramsSchema = z.object({
       id: z.string().uuid(),
     })
 
     const { id } = paramsSchema.parse(request.params)
+
+    let memoryDoSql = await prismaFuncao.memory.findFirstOrThrow({
+      where: {
+        id,
+      }
+    })
+
+    if (memoryDoSql.userId != request.user.sub) {
+      return reply.status(401).send()
+    }
 
     await prismaFuncao.memory.delete({
       where: {

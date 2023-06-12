@@ -2,15 +2,13 @@ import { FastifyInstance } from 'fastify'
 import axios from 'axios'
 import { z } from 'zod'
 import { prismaFuncao } from '../lib/prisma'
-import { userInfo } from 'os'
-
 
 export async function authRoutes(funcaoFastify: FastifyInstance) {
   funcaoFastify.post('/register', async (request) => {
     const bodySchema = z.object({
       code: z.string(),
     })
-    
+
     const { code } = bodySchema.parse(request.body)
 
     const accessTokenResponse = await axios.post(
@@ -29,28 +27,26 @@ export async function authRoutes(funcaoFastify: FastifyInstance) {
     )
 
     const { access_token } = accessTokenResponse.data
-
     const userResponse = await axios.get('https://api.github.com/user', {
      headers: {
         Authorization: `Bearer ${access_token}`,
       },
     })
+    
     const validandoDados = z.object({
       id: z.number(),
       login: z.string(),
       name: z.string(),
       avatar_url: z.string().url(),
-    })  
-
+    }) 
+    
     const userInfor = validandoDados.parse(userResponse.data)
 
-    let user = await prismaFuncao.user.findUnique({ //busca usuario
-      where: { // informa quais os paramentros para busca o usuario
+    let user = await prismaFuncao.user.findUnique({
+      where: {
         githubId: userInfor.id
       }
     })
-    
-    // se o user nao for encontrado, if criarar novo user
     if (!user) {
       user = await prismaFuncao.user.create({
         data: {
@@ -60,11 +56,21 @@ export async function authRoutes(funcaoFastify: FastifyInstance) {
           avatarUrl: userInfor.avatar_url,
         }
       })
-
     }
+    const token = funcaoFastify.jwt.sign(
+      {
+      name: user.nome,
+      avatarUrl: user.avatarUrl,
+      }, 
+      {
+        sub: user.id, 
+        expiresIn: '30 days', 
+      }
+    )
+
 
     return {
-      user,
+      token,
     }
   })
 }
