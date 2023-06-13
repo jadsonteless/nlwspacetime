@@ -1,5 +1,5 @@
 import { api } from '@/lib/api'
-import { NextRequest } from 'next/server' // utilizado para tipar o metodo GET
+import { NextRequest, NextResponse } from 'next/server' // utilizado para tipar o metodo GET
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
@@ -11,5 +11,13 @@ export async function GET(request: NextRequest) {
 
   const { token } = registerResponse.data
 
-  console.log(token)
+  const redirectURL = new URL('/', request.url)
+
+  const cookieExpiraPorSegundo = 60 * 60 * 24 * 30
+
+  return NextResponse.redirect(redirectURL, {
+    headers: {
+      'Set-Cookie': `token=${token}; Path=/; max-age=${cookieExpiraPorSegundo}`,
+    },
+  })
 }
