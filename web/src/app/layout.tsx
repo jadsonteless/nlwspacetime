@@ -8,7 +8,7 @@ import {
 const roboto = Roboto({ subsets: ['latin'], variable: '--font-roboto' })
 
 const baiJamjuree = BaiJamjuree({
-  subsets: ['latin'],
+  subsets: ['latin'], // informa o tipo de acentuação
   weight: '700',
   variable: '--font-bai-jamjuree', // adicionar var a tail.config
 })
